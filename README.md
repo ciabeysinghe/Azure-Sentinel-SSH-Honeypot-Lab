@@ -22,44 +22,44 @@ By configuring Microsoft Sentinel to ingest Syslog data, I authored custom Kusto
 ### 1. Infrastructure Setup & Honeypot Deployment
 I provisioned an **Ubuntu 24.04** virtual machine (`SIEMProject1`) in the Azure Southeast Asia region. This machine was assigned a public IP address to ensure it was reachable from the outside world.
 
-![Virtual Machine Deployed](Assets/Screenshot 2026-03-11 090606.png)
+![Virtual Machine Deployed](Assets/Screenshot%202026-03-11%20090606.png)
 
 To guarantee the honeypot attracted live internet traffic, I intentionally misconfigured the Network Security Group (NSG) by opening **Port 22 (SSH)** and **Port 3389 (RDP)** to the public internet (`Source: Any`). This essentially placed a target on the machine's back for automated scanners.
 
-![Vulnerable NSG Configuration](Assets/Screenshot 2026-03-11 084254.png)
+![Vulnerable NSG Configuration](Assets/Screenshot%202026-03-11%20084254.png)
 
 ### 2. Log Management & Telemetry Pipeline
 With the target infrastructure running, I deployed a **Log Analytics Workspace** (`Project-LogAnalytics`) and attached **Microsoft Sentinel** to act as the centralized database for all security events.
 
-![Sentinel Workspace](Assets/Screenshot 2026-03-11 084426.png)
+![Sentinel Workspace](Assets/Screenshot%202026-03-11%20084426.png)
 
 To transport the authentication logs (`auth.log`) from the Linux machine into Sentinel, I configured the **Azure Monitor Agent (AMA)** via Sentinel's Data Connectors to ingest **Syslog** events. 
 
-![Syslog via AMA Connected](Assets/Screenshot 2026-03-11 085232.png)
+![Syslog via AMA Connected](Assets/Screenshot%202026-03-11%20085232.png)
 
 ### 3. Custom Detection Engineering (KQL)
 To simulate the role of a SOC Analyst, I utilized Kusto Query Language (KQL) to author a custom Analytics Rule named **"Failed Sign In"**.
 
-![Analytics Rule Wizard - General](Assets/Screenshot 2026-03-11 085404.png)
+![Analytics Rule Wizard - General](Assets/Screenshot%202026-03-11%20085404.png)
 
 I designed the rule logic to specifically hunt for SSH authentication failures. The KQL query filters the Syslog for the `auth` facility, looks for messages containing `"Failed password"`, and counts the attempts by `Computer` over 5-minute intervals. If the attempts exceed 5, an alert is triggered.
 
-![Analytics Rule Logic - KQL Query](Assets/Screenshot 2026-03-11 085420.png)
+![Analytics Rule Logic - KQL Query](Assets/Screenshot%202026-03-11%20085420.png)
 
 Before deploying the rule, I mapped the detection to the MITRE ATT&CK framework under the **Credential Access** tactic. The rule was scheduled to run every 5 minutes to ensure near real-time detection.
 
-![Analytics Rule - Review and Create](Assets/Screenshot 2026-03-11 085526.png)
+![Analytics Rule - Review and Create](Assets/Screenshot%202026-03-11%20085526.png)
 
 ### 4. Incident Generation & MITRE ATT&CK Mapping
 Because the VM was exposed to the open internet, threat actors found it almost immediately. The custom detection rule began firing aggressively, generating nearly **6,000 active incidents** as automated botnets attempted to brute-force the SSH service.
 
-![Active Incidents - Failed Sign Ins](Assets/Screenshot 2026-03-11 090130.png)
+![Active Incidents - Failed Sign Ins](Assets/Screenshot%202026-03-11%20090130.png)
 
 Within Sentinel, I mapped these real-world attacks against the MITRE ATT&CK framework. The primary behaviors observed aligned with:
 * **Initial Access: Exploit Public-Facing Application (T1190)**
 * **Execution: Command and Scripting Interpreter (T1059)**
 
-![MITRE - Exploit Public-Facing Application](Assets/Screenshot 2026-03-11 084923.png)
+![MITRE - Exploit Public-Facing Application](Assets/Screenshot%202026-03-11%20084923.png)
 
 ## 💡 Conclusion & Key Takeaways
 This lab provided hands-on, practical experience in cloud security engineering. Through this project, I successfully:
